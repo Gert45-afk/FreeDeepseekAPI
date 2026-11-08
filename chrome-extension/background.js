@@ -105,3 +105,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
+
+// Only our DeepSeek content script can use this narrow loopback bridge.
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action !== 'relayFetch' || sender.id !== chrome.runtime.id || !sender.tab || !/^https:\/\/chat\.deepseek\.com\//.test(sender.url || '')) return;
+  if (!['/relay/job', '/relay/update'].includes(request.path)) return;
+  (async () => {
+    const { relayKey, relayEnabled } = await chrome.storage.local.get(['relayKey', 'relayEnabled']);
+    if (!relayEnabled || !relayKey) return { error: 'Relay disabled' };
+    const response = await fetch('http://127.0.0.1:9656' + request.path, {
+      method: request.path === '/relay/job' ? 'GET' : 'POST',
+      headers: { Authorization: `Bearer ${relayKey}`, 'Content-Type': 'application/json' },
+      ...(request.path === '/relay/update' ? { body: JSON.stringify(request.body) } : {}),
+      signal: AbortSignal.timeout(5000),
+    });
+    return { status: response.status, data: await response.json() };
+  })().then(sendResponse, e => sendResponse({ error: e.message }));
+  return true;
+});
