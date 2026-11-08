@@ -102,13 +102,3 @@ $('btnSave').addEventListener('click', () => {
 
 // Initial load
 loadAuth();
-
-chrome.storage.local.get(['relayKey', 'relayEnabled'], ({ relayKey, relayEnabled }) => {
-  $('relayKey').value = relayKey || '';
-  $('relayEnabled').checked = !!relayEnabled;
-});
-$('relaySave').addEventListener('click', () => {
-  const relayKey = $('relayKey').value.trim();
-  if ($('relayEnabled').checked && relayKey.length < 16) { $('relayStatus').textContent = 'Key must be at least 16 characters'; return; }
-  chrome.storage.local.set({ relayKey, relayEnabled: $('relayEnabled').checked }, () => { $('relayStatus').textContent = 'Saved. Reload the DeepSeek tab.'; });
-});

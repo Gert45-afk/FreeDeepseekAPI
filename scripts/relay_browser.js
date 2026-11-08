@@ -5,6 +5,8 @@ const { createRelayServer } = require('./relay_server');
 const crypto = require('crypto');
 const path = require('path');
 const readline = require('readline');
+const fs = require('fs');
+const { normalizeCookies } = require('../lib/relay_cookies');
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const ask = prompt => new Promise(resolve => {
@@ -73,6 +75,15 @@ async function main() {
   console.log('[relay] Открываю Chrome. Войдите в DeepSeek в открывшемся окне.');
   const context = await chromium.launchPersistentContext(profile, { channel: 'chrome', headless: false });
   try {
+  if (process.env.RELAY_COOKIES_PATH) {
+    // Never log paths, raw JSON, cookie values, or Playwright errors that may contain them.
+    let cookies;
+    try { cookies = normalizeCookies(JSON.parse(fs.readFileSync(process.env.RELAY_COOKIES_PATH, 'utf8'))); }
+    catch (_) { throw new Error('Не удалось прочитать файл cookies: проверьте путь, JSON и домены DeepSeek'); }
+    try { await context.addCookies(cookies); }
+    catch (_) { throw new Error('Не удалось импортировать cookies в Chrome; проверьте формат файла'); }
+    console.log('[relay] Cookies импортированы в локальный профиль Chrome.');
+  }
   const page = context.pages()[0] || await context.newPage();
   let closed = false;
   context.on('close', () => { closed = true; });

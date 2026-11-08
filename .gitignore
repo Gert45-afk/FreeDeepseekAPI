@@ -17,3 +17,6 @@ data/accounts/*.json
 
 # Browser relay profile contains the signed-in Chrome session.
 .chrome-profile-relay/
+
+# Cookie exports contain authentication secrets.
+relay-cookies.json
