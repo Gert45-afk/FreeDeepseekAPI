@@ -14,3 +14,6 @@ data/accounts/*.json
 /tmp/deepseek_response_*
 .DS_Store
 *.pdf
+
+# Browser relay profile contains the signed-in Chrome session.
+.chrome-profile-relay/
